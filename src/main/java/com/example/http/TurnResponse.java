@@ -1,15 +1,16 @@
 package com.example.http;
 
-import com.example.models.Player;
+import com.example.services.GameStateService.Choice;
+import com.example.services.GameStateService.GameResult;
 
 import java.util.Map;
 
 public class TurnResponse {
     public Boolean gameOver = false;
-    public Player winner;
-    public Map<String, String> state;
+    public GameResult winner;
+    public Map<String, Choice> state;
 
-    public TurnResponse(Player winner, Map<String, String> state) {
+    public TurnResponse(GameResult winner, Map<String, Choice> state) {
         if (winner != null) {
             this.winner = winner;
             this.gameOver = true;
@@ -21,7 +22,7 @@ public class TurnResponse {
         this.gameOver = gameOver;
     }
 
-    public void setState(Map<String, String> state) {
+    public void setState(Map<String, Choice> state) {
         this.state = state;
     }
 
@@ -29,7 +30,7 @@ public class TurnResponse {
         return gameOver;
     }
 
-    public Map<String, String> getState() {
+    public Map<String, Choice> getState() {
         return state;
     }
 

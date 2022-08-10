@@ -1,7 +1,6 @@
 package com.example.services;
 
 import com.example.exceptions.InvalidChoiceException;
-import com.example.models.Player;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
@@ -12,8 +11,20 @@ import java.util.stream.Collectors;
 @Service
 public class GameStateService {
 
+    public enum Choice {
+        X,
+        O
+    }
+
+    public enum GameResult {
+        X,
+        O,
+        Draw
+    }
+
     public Boolean gameOver;
-    public Map<String, String> board;
+    public Map<String, Choice> board;
+    public Choice nextPlayer;
 
     public GameStateService() {
         this.board = new HashMap<>();
@@ -27,6 +38,7 @@ public class GameStateService {
         this.board.put("7", null);
         this.board.put("8", null);
         this.gameOver = false;
+        this.nextPlayer = Choice.X;
     }
 
     public Boolean isGameOver() {
@@ -37,14 +49,24 @@ public class GameStateService {
         this.gameOver = gameOver;
     }
 
-    public void updateState(String position, Player player) {
+    public void updateState(String position) {
         if (board.get(position) != null) {
             throw new InvalidChoiceException("The position has already been taken");
         }
-        board.put(position, player.getId());
+        board.put(position, this.nextPlayer);
+        changeNextPlayer();
     }
 
-    public Map<String, String> resetBoard(Map<String, String> board) {
+    public void changeNextPlayer() {
+
+        if (this.nextPlayer.equals(Choice.X)) {
+            this.nextPlayer = Choice.O;
+        } else if (this.nextPlayer.equals(Choice.O)) {
+            this.nextPlayer = Choice.X;
+        }
+    }
+
+    public Map<String, Choice> resetBoard(Map<String, Choice> board) {
         board.clear();
         board.put("0", null);
         board.put("1", null);
@@ -56,47 +78,42 @@ public class GameStateService {
         board.put("7", null);
         board.put("8", null);
         this.gameOver = false;
+        this.nextPlayer = Choice.X;
         return board;
     };
 
-    public String checkWinner() {
-        for (int a = 0; a < 8; a++) {
-            String line = null;
-            switch (a) {
-                case 0:
-                    line = board.get("0") + board.get("1") + board.get("2");
-                    break;
-                case 1:
-                    line = board.get("3") + board.get("4") + board.get("5");
-                    break;
-                case 2:
-                    line = board.get("6") + board.get("7") + board.get("8");
-                    break;
-                case 3:
-                    line = board.get("0") + board.get("3") + board.get("6");
-                    break;
-                case 4:
-                    line = board.get("1") + board.get("4") + board.get("7");
-                    break;
-                case 5:
-                    line = board.get("2") + board.get("5") + board.get("8");
-                    break;
-                case 6:
-                    line = board.get("0") + board.get("4") + board.get("8");
-                    break;
-                case 7:
-                    line = board.get("2") + board.get("4") + board.get("6");
-                    break;
-            }
-            if (line.equals("XXX")) {
-                return "X";
-            } else if (line.equals("OOO")) {
-                return "O";
-            }
+    private GameResult choiceToGameResult(Choice choice) {
+        switch (choice) {
+            case X:
+                return GameResult.X;
+
+            case O:
+                return GameResult.O;
+
+            default:
+                throw new Error(":(");
+        }
+    }
+
+    public GameResult checkWinner() {
+        if (((board.get("0") == board.get("1")) && (board.get("1") == board.get("2"))
+                || (board.get("0") == board.get("3")) && (board.get("3") == board.get("6"))
+                || (board.get("0") == board.get("4")) && (board.get("4") == board.get("8")))
+                && board.get("0") != null) {
+            return choiceToGameResult(board.get("0"));
+        } else if (((board.get("3") == board.get("4")) && (board.get("4") == board.get("5"))
+                || (board.get("1") == board.get("4")) && (board.get("4") == board.get("7"))
+                || (board.get("2") == board.get("4")) && (board.get("4") == board.get("6")))
+                && board.get("4") != null) {
+            return choiceToGameResult(board.get("4"));
+        } else if (((board.get("2") == board.get("5")) && (board.get("5") == board.get("8"))
+                || (board.get("6") == board.get("7")) && (board.get("7") == board.get("8")))
+                && board.get("8") != null) {
+            return choiceToGameResult(board.get("8"));
         }
 
         if (board.values().stream().filter(Objects::nonNull).collect(Collectors.toList()).size() == 8) {
-            return "Draw";
+            return GameResult.Draw;
         }
 
         return null;

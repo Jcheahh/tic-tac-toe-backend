@@ -3,9 +3,9 @@ package com.example.controller;
 import com.example.http.TurnRequest;
 import com.example.http.TurnResponse;
 import com.example.http.StateResponse;
-import com.example.models.Player;
 import com.example.services.GameStateService;
-import com.example.services.PlayersService;
+import com.example.services.GameStateService.Choice;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,21 +16,21 @@ import java.util.Map;
 @RestController
 public class Controller {
     private final GameStateService gameStateService;
-    private final PlayersService playersService;
 
     @Autowired
-    public Controller(GameStateService gameStateService, PlayersService playersService) {
+    public Controller(GameStateService gameStateService) {
         this.gameStateService = gameStateService;
-        this.playersService = playersService;
     }
 
     @GetMapping("/state")
     public StateResponse getState() {
-        return new StateResponse(gameStateService.isGameOver(), gameStateService.board);
+        return new StateResponse(gameStateService.isGameOver(),
+                gameStateService.board,
+                gameStateService.nextPlayer, findWinner());
     }
 
     @PostMapping("/reset")
-    public Map<String, String> resetState() {
+    public Map<String, Choice> resetState() {
         return gameStateService.resetBoard(gameStateService.board);
     }
 
@@ -39,34 +39,19 @@ public class Controller {
         if (gameStateService.isGameOver()) {
             return new TurnResponse(findWinner(), gameStateService.board);
         } else {
-            gameStateService.updateState(String.valueOf(request.getPosition()),
-                    playersService.getPlayer(request.getPlayerId()));
+            gameStateService.updateState(String.valueOf(request.getPosition()));
             return new TurnResponse(findWinner(), gameStateService.board);
         }
     }
 
-    private Player findWinner() {
-        String winner = gameStateService.checkWinner();
-        Player playerWinner;
+    private GameStateService.GameResult findWinner() {
+        GameStateService.GameResult winner = gameStateService.checkWinner();
 
         if (winner != null) {
-            switch (winner) {
-                case "X":
-                case "O":
-                    playerWinner = playersService.getPlayer(winner);
-                    gameStateService.endGame(true);
-                    break;
-                case "Draw":
-                    playerWinner = new Player("Draw", "No one wins");
-                    gameStateService.endGame(true);
-                    break;
-                default:
-                    playerWinner = null;
-            }
-            return playerWinner;
+            gameStateService.endGame(true);
         }
 
-        return null;
+        return winner;
 
     }
 }
