@@ -11,10 +11,3 @@ public class BackendApplication {
 	}
 
 }
-
-// create_board(self):
-// for i in range(3):
-// row = []
-// for j in range(3):
-// row.append('_')
-// self.board.append(row)
